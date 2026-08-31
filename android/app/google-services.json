@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1006763035386",
+    "project_id": "sylvera-a461e",
+    "storage_bucket": "sylvera-a461e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1006763035386:android:1de92ec41a68f0fdb9d743",
+        "android_client_info": {
+          "package_name": "com.example.sylvera_fe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1006763035386-51lrl2d9g6a8me137tc8i6it5ip7bj50.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNJYUjns9ADj5_WmxCP5vpiRzLLDdN7hY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1006763035386-51lrl2d9g6a8me137tc8i6it5ip7bj50.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
