@@ -1,8 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_sign_in/google_sign_in.dart' show GoogleSignIn;
+import 'package:google_sign_in_web/web_only.dart' as google_web;
 import 'package:sylvera_fe/auth/cubit/auth_cubit.dart';
 import 'package:sylvera_fe/auth/cubit/auth_state.dart';
-
+import 'package:sylvera_fe/theme/app_theme.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -17,72 +20,128 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _isRegisterMode = false;
 
   @override
+  void initState() {
+    super.initState();
+    context.read<AuthCubit>().prepareGoogleSignIn();
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  BoxDecoration get _fieldDecoration => BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.muted.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(8),
+      );
+
+  Widget _buildGoogleButton(BuildContext context) {
+    if (GoogleSignIn.instance.supportsAuthenticate()) {
+      return CupertinoButton(
+        color: AppColors.surface,
+        onPressed: () => context.read<AuthCubit>().signInWithGoogle(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(CupertinoIcons.globe, color: AppColors.ivory),
+            const SizedBox(width: 8),
+            Text('Continue with Google', style: AppTextStyles.body),
+          ],
+        ),
+      );
+    }
+    if (kIsWeb) {
+      return google_web.renderButton();
+    }
+    return const SizedBox.shrink();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Sylvera')),
-      body: BlocListener<AuthCubit, AuthState>(
-        listener: (context, state) {
-          if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-          }
-        },
+    return CupertinoPageScaffold(
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Sylvera'),
+      ),
+      child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextField(
+              CupertinoTextField(
                 controller: _emailController,
+                placeholder: 'Email',
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
+                padding: const EdgeInsets.all(14),
+                decoration: _fieldDecoration,
+                style: AppTextStyles.body,
+                placeholderStyle: AppTextStyles.bodyMuted,
               ),
               const SizedBox(height: 12),
-              TextField(
+              CupertinoTextField(
                 controller: _passwordController,
+                placeholder: 'Password',
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
+                padding: const EdgeInsets.all(14),
+                decoration: _fieldDecoration,
+                style: AppTextStyles.body,
+                placeholderStyle: AppTextStyles.bodyMuted,
               ),
               const SizedBox(height: 20),
               BlocBuilder<AuthCubit, AuthState>(
                 builder: (context, state) {
                   if (state is AuthLoading) {
-                    return const CircularProgressIndicator();
+                    return const Center(child: CupertinoActivityIndicator());
                   }
-                  return ElevatedButton(
-                    onPressed: () {
-                      final cubit = context.read<AuthCubit>();
-                      if (_isRegisterMode) {
-                        cubit.register(
-                          _emailController.text,
-                          _passwordController.text,
-                        );
-                      } else {
-                        cubit.signIn(
-                          _emailController.text,
-                          _passwordController.text,
-                        );
-                      }
-                    },
-                    child: Text(_isRegisterMode ? 'Register' : 'Sign In'),
+                  return Column(
+                    children: [
+                      CupertinoButton.filled(
+                        onPressed: () {
+                          final cubit = context.read<AuthCubit>();
+                          if (_isRegisterMode) {
+                            cubit.register(
+                              _emailController.text,
+                              _passwordController.text,
+                            );
+                          } else {
+                            cubit.signIn(
+                              _emailController.text,
+                              _passwordController.text,
+                            );
+                          }
+                        },
+                        child: Text(_isRegisterMode ? 'Register' : 'Sign In'),
+                      ),
+                      if (state is AuthError) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          state.message,
+                          style: AppTextStyles.body
+                              .copyWith(color: AppColors.garnet),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      _buildGoogleButton(context),
+                    ],
                   );
                 },
               ),
-              TextButton(
+              const SizedBox(height: 12),
+              CupertinoButton(
                 onPressed: () {
                   setState(() => _isRegisterMode = !_isRegisterMode);
                 },
-                child: Text(_isRegisterMode
-                    ? 'Already have an account? Sign in'
-                    : "Don't have an account? Register"),
+                child: Text(
+                  _isRegisterMode
+                      ? 'Already have an account? Sign in'
+                      : "Don't have an account? Register",
+                  style: AppTextStyles.bodyMuted,
+                ),
               ),
             ],
           ),

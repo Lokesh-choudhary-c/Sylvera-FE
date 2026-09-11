@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
@@ -21,45 +21,58 @@ class AppColors {
   );
 }
 
+class AppTextStyles {
+  static TextStyle headline = GoogleFonts.fraunces(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: AppColors.ivory,
+  );
+
+  static TextStyle navTitle = GoogleFonts.fraunces(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: AppColors.ivory,
+  );
+
+  static TextStyle body = GoogleFonts.inter(
+    fontSize: 14,
+    color: AppColors.ivory,
+  );
+
+  static TextStyle bodyMuted = GoogleFonts.inter(
+    fontSize: 12,
+    color: AppColors.muted,
+  );
+
+  static TextStyle priceLabel = GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: AppColors.garnet,
+  );
+}
+
 class AppTheme {
-  static ThemeData get theme {
-    final base = ThemeData.dark();
-    return base.copyWith(
+  static CupertinoThemeData get cupertinoTheme {
+    return CupertinoThemeData(
+      brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.ink,
-      colorScheme: base.colorScheme.copyWith(
-        surface: AppColors.ink,
-        primary: AppColors.garnet,
-      ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.ink,
-        elevation: 0,
-        titleTextStyle: GoogleFonts.fraunces(
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-          color: AppColors.ivory,
+      barBackgroundColor: AppColors.ink,
+      primaryColor: AppColors.garnet,
+      textTheme: CupertinoTextThemeData(
+        navTitleTextStyle: AppTextStyles.navTitle.copyWith(inherit: false),
+        navLargeTitleTextStyle: AppTextStyles.navTitle.copyWith(
+          inherit: false,
+          fontSize: 32,
         ),
-      ),
-      textTheme: TextTheme(
-        headlineSmall: GoogleFonts.fraunces(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.ivory,
-        ),
-        bodyMedium: GoogleFonts.inter(fontSize: 14, color: AppColors.ivory),
-        bodySmall: GoogleFonts.inter(fontSize: 12, color: AppColors.muted),
-        labelLarge: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
+        navActionTextStyle: AppTextStyles.body.copyWith(inherit: false),
+        textStyle: AppTextStyles.body.copyWith(inherit: false),
+        actionTextStyle: AppTextStyles.body.copyWith(
+          inherit: false,
           color: AppColors.garnet,
         ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.garnet,
-          foregroundColor: AppColors.ivory,
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        ),
+        tabLabelTextStyle: AppTextStyles.bodyMuted.copyWith(inherit: false),
+        pickerTextStyle: AppTextStyles.body.copyWith(inherit: false),
+        dateTimePickerTextStyle: AppTextStyles.body.copyWith(inherit: false),
       ),
     );
   }

@@ -1,11 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sylvera_fe/variant%20price/cubit/variant_price_cubit.dart';
-import 'package:sylvera_fe/variant%20price/cubit/variant_price_state.dart';
+import 'package:sylvera_fe/variant_price/cubit/variant_price_cubit.dart';
+import 'package:sylvera_fe/variant_price/cubit/variant_price_state.dart';
 import '../../theme/app_theme.dart';
 import '../../cart/cubit/cart_cubit.dart';
-import '../../cart/cubit/cart_state.dart';
-
 import '../models/product.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -19,6 +17,7 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   ProductVariant? _selectedVariant;
   int _quantity = 1;
+  bool _isAddingToCart = false;
 
   @override
   void initState() {
@@ -33,84 +32,116 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     context.read<VariantPriceCubit>().fetchPrice(variant.variantId);
   }
 
+  void _showMessage(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _addToCart() async {
+    setState(() => _isAddingToCart = true);
+    try {
+      await context.read<CartCubit>().addToCart(
+            variantId: _selectedVariant!.variantId,
+            quantity: _quantity,
+          );
+      if (mounted) _showMessage('Added to cart');
+    } catch (e) {
+      if (mounted) _showMessage('Failed to add to cart: $e');
+    } finally {
+      if (mounted) setState(() => _isAddingToCart = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
     final hasVariants = product.variants.isNotEmpty;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(product.name)),
-      body: BlocListener<CartCubit, CartState>(
-        listener: (context, state) {
-          if (state is CartSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Added to cart')),
-            );
-          }
-          if (state is CartError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-          }
-        },
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(product.name),
+      ),
+      child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(product.name,
-                  style: Theme.of(context).textTheme.headlineSmall),
+              Text(product.name, style: AppTextStyles.headline),
               const SizedBox(height: 4),
               Text(
                 [
                   if (product.metalType != null) product.metalType!,
                   if (product.purity != null) product.purity!,
                 ].join(' · '),
-                style: Theme.of(context).textTheme.bodySmall,
+                style: AppTextStyles.bodyMuted,
               ),
               const SizedBox(height: 24),
               if (!hasVariants)
                 Text(
                   'This item has no purchasable options yet.',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: AppColors.muted),
+                  style: AppTextStyles.bodyMuted,
                 )
               else ...[
-                Text('Options', style: Theme.of(context).textTheme.bodySmall),
+                Text('Options', style: AppTextStyles.bodyMuted),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: product.variants.map((variant) {
                     final isSelected =
                         variant.variantId == _selectedVariant?.variantId;
-                    return ChoiceChip(
-                      label: Text(variant.variantValue),
-                      selected: isSelected,
-                      onSelected: (_) => _selectVariant(variant),
-                      selectedColor: AppColors.garnet,
-                      labelStyle: TextStyle(
-                        color: isSelected ? AppColors.ivory : AppColors.muted,
+                    return GestureDetector(
+                      onTap: () => _selectVariant(variant),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.garnet
+                              : AppColors.surface,
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.garnet
+                                : AppColors.muted.withOpacity(0.3),
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          variant.variantValue,
+                          style: AppTextStyles.body.copyWith(
+                            color:
+                                isSelected ? AppColors.ivory : AppColors.muted,
+                          ),
+                        ),
                       ),
-                      backgroundColor: AppColors.surface,
                     );
                   }).toList(),
                 ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
                       onPressed: _quantity > 1
                           ? () => setState(() => _quantity--)
                           : null,
+                      child: const Icon(CupertinoIcons.minus_circle),
                     ),
-                    Text('$_quantity',
-                        style: Theme.of(context).textTheme.bodyMedium),
-                    IconButton(
-                      icon: const Icon(Icons.add),
+                    Text('$_quantity', style: AppTextStyles.body),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
                       onPressed: () => setState(() => _quantity++),
+                      child: const Icon(CupertinoIcons.add_circled),
                     ),
                   ],
                 ),
@@ -118,46 +149,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 BlocBuilder<VariantPriceCubit, VariantPriceState>(
                   builder: (context, state) {
                     if (state is VariantPriceLoading) {
-                      return const CircularProgressIndicator();
+                      return const CupertinoActivityIndicator();
                     }
                     if (state is VariantPriceError) {
-                      return Text(state.message,
-                          style: const TextStyle(color: AppColors.garnet));
+                      return Text(
+                        state.message,
+                        style: AppTextStyles.body
+                            .copyWith(color: AppColors.garnet),
+                      );
                     }
                     if (state is VariantPriceLoaded) {
                       return Text(
                         '₹${state.price.calculatedPrice.toStringAsFixed(0)}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(color: AppColors.garnet),
+                        style: AppTextStyles.headline
+                            .copyWith(color: AppColors.garnet),
                       );
                     }
                     return const SizedBox.shrink();
                   },
                 ),
                 const SizedBox(height: 24),
-                BlocBuilder<CartCubit, CartState>(
-                  builder: (context, state) {
-                    final isLoading = state is CartLoading;
-                    return ElevatedButton(
-                      onPressed: isLoading || _selectedVariant == null
-                          ? null
-                          : () {
-                              context.read<CartCubit>().addToCart(
-                                    variantId: _selectedVariant!.variantId,
-                                    quantity: _quantity,
-                                  );
-                            },
-                      child: isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Add to cart'),
-                    );
-                  },
+                CupertinoButton.filled(
+                  onPressed: _isAddingToCart || _selectedVariant == null
+                      ? null
+                      : _addToCart,
+                  child: _isAddingToCart
+                      ? const CupertinoActivityIndicator(
+                          color: CupertinoColors.white)
+                      : const Text('Add to cart'),
                 ),
               ],
             ],

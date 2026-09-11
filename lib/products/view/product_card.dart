@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../theme/app_theme.dart';
 import '../models/product.dart';
 
@@ -49,22 +49,19 @@ class ProductCard extends StatelessWidget {
               children: [
                 Text(
                   product.name,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: AppTextStyles.headline,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   specLine,
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: AppTextStyles.bodyMuted,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  priceLabel,
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
+                Text(priceLabel, style: AppTextStyles.priceLabel),
               ],
             ),
           ),
